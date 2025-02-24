@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LivewareTestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,4 +26,10 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+});
+
+Route::controller(LivewareTestController::class)
+->prefix('livewire-test')->name('livewire-test.')->group(function(){
+    Route::get('index','index')->name('index');
+    Route::get('register','register')->name('register');
 });
