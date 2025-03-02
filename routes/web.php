@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LivewareTestController;
+use App\Http\Controllers\AlpineTestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,3 +34,5 @@ Route::controller(LivewareTestController::class)
     Route::get('index','index')->name('index');
     Route::get('register','register')->name('register');
 });
+
+Route::get('alpine-test/index',[AlpineTestController::class,'index']);
