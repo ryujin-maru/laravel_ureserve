@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\LivewareTestController;
 use App\Http\Controllers\AlpineTestController;
-use Barryvdh\Debugbar\DataCollector\EventCollector;
+use App\Http\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,7 +31,7 @@ Route::middleware([
 });
 
 Route::prefix('manager')->middleware('can:manager-higher')->group(function() {
-    Route::resource('events',EventCollector::class);
+    Route::resource('events',EventController::class);
 });
 
 Route::middleware('can:user-higher')->group(function() {
