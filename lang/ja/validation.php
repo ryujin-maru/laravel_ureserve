@@ -255,6 +255,12 @@ return [
         'updated_at' => '更新日',
         'username' => 'ユーザー名',
         'year' => '年',
+        'event_name' => 'イベント名',
+        'information' => 'イベントの詳細',
+        'event_date' => 'イベントの日付',
+        'start_time' => '開始時間',
+        'end_time' => '終了時間',
+        'max_people' => '定員'
     ],
 
 ];

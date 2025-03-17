@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Models\Event;
+use App\Services\EventService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
@@ -39,7 +41,25 @@ class EventController extends Controller
      */
     public function store(StoreEventRequest $request)
     {
-        //
+        $check = EventService::checkEventDuplication($request->event_time,$request->start_time,$request->start_time);
+
+        if($check) {
+            return to_route('events.create')->with('status','この時間帯はすでに他の予約が存在します。');
+        }
+
+        $start_date = EventService::joinDateAndTime($request->event_date,$request->start_time);
+        $end_date = EventService::joinDateAndTime($request->event_date,$request->end_time);
+
+        Event::create([
+            'name' => $request->event_name,
+            'information' => $request->information,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+            'max_people' => $request->max_people,
+            'is_visible' => $request->is_visible,
+        ]);
+
+        return to_route('events.index')->with('status','登録しました。');
     }
 
     /**
