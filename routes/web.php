@@ -3,6 +3,7 @@
 use App\Http\Controllers\LivewareTestController;
 use App\Http\Controllers\AlpineTestController;
 use App\Http\Controllers\EventController;
+use Barryvdh\Debugbar\DataCollector\EventCollector;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,6 +32,7 @@ Route::middleware([
 });
 
 Route::prefix('manager')->middleware('can:manager-higher')->group(function() {
+    Route::get('events/past',[EventController::class,'past'])->name('events.past');
     Route::resource('events',EventController::class);
 });
 

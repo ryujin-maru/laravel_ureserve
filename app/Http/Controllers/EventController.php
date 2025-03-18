@@ -18,7 +18,9 @@ class EventController extends Controller
      */
     public function index()
     {
-        $events = Event::orderBy('start_date','asc')->paginate(10);
+        $today = Carbon::today();
+        $events = Event::whereDate('start_date','>=',$today)
+        ->orderBy('start_date','asc')->paginate(10);
 
         return view('manager.events.index',compact('events'));
     }
@@ -41,7 +43,7 @@ class EventController extends Controller
      */
     public function store(StoreEventRequest $request)
     {
-        $check = EventService::checkEventDuplication($request->event_time,$request->start_time,$request->start_time);
+        $check = EventService::checkEventDuplication($request->event_date,$request->start_time,$request->end_time);
 
         if($check) {
             return to_route('events.create')->with('status','この時間帯はすでに他の予約が存在します。');
@@ -74,6 +76,7 @@ class EventController extends Controller
         $eventDate = $event->eventDate;
         $startTime = $event->startTime;
         $endTime = $event->endTime;
+        // ,'eventDate','startTime','endTime'
 
         return view('manager.events.show',compact('event'));
     }
@@ -86,7 +89,13 @@ class EventController extends Controller
      */
     public function edit(Event $event)
     {
-        //
+        $event = Event::findOrFail($event->id);
+        $eventDate = $event->editEventDate;
+        $startTime = $event->startTime;
+        $endTime = $event->endTime;
+        // ,'eventDate','startTime','endTime'
+
+        return view('manager.events.edit',compact('event'));
     }
 
     /**
@@ -98,7 +107,39 @@ class EventController extends Controller
      */
     public function update(UpdateEventRequest $request, Event $event)
     {
-        //
+        $check = EventService::countCheckEventDuplication($request->event_date,$request->start_time,$request->end_time);
+
+        if($check > 1) {
+            $event = Event::findOrFail($event->id);
+            $eventDate = $event->editEventDate;
+            $startTime = $event->startTime;
+            $endTime = $event->endTime;
+            return to_route('events.edit',compact('event'))->with('status','この時間帯はすでに他の予約が存在します。');
+        }
+
+        $start_date = EventService::joinDateAndTime($request->event_date,$request->start_time);
+        $end_date = EventService::joinDateAndTime($request->event_date,$request->end_time);
+
+        $event = Event::findOrFail($event->id);
+
+        $event->name = $request->event_name;
+        $event->information = $request->information;
+        $event->start_date = $start_date;
+        $event->end_date = $end_date;
+        $event->max_people = $request->max_people;
+        $event->is_visible = $request->is_visible;
+        $event->save();
+
+        return to_route('events.index')->with('status','更新しました。');
+    }
+
+    public function past()
+    {
+        $today = Carbon::today();
+        $events = Event::whereDate('start_date','<',$today)
+        ->orderBy('start_date','desc')->paginate(10);
+
+        return view('manager.events.past',compact('events'));
     }
 
     /**
