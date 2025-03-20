@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Models\Event;
+use App\Models\Reservation;
 use App\Services\EventService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +20,17 @@ class EventController extends Controller
     public function index()
     {
         $today = Carbon::today();
-        $events = Event::whereDate('start_date','>=',$today)
-        ->orderBy('start_date','asc')->paginate(10);
+
+        $reservedPeople = Reservation::select('event_id',DB::raw('SUM(number_of_people) as number_of_people'))
+        ->whereNull('canceled_date')
+        ->groupBy('event_id');
+
+        $events = Event::leftJoinSub($reservedPeople,'reservedPeople',function($join) {
+            $join->on('events.id','=','reservedPeople.event_id');
+        })
+        ->whereDate('start_date','>=',$today)
+        ->orderBy('start_date','asc')
+        ->paginate(10);
 
         return view('manager.events.index',compact('events'));
     }
@@ -73,12 +83,25 @@ class EventController extends Controller
     public function show(Event $event)
     {
         $event = Event::findOrFail($event->id);
+        $users = $event->users;
+
+        $reservations = [];
+        foreach($users as $user)
+        {
+            $reservationInfo = [
+                'name' => $user->name,
+                'number_of_people' => $user->pivot->number_of_people,
+                'canceled_date' => $user->pivot->canceled_date
+            ];
+            array_push($reservations,$reservationInfo);
+        }
+
         $eventDate = $event->eventDate;
         $startTime = $event->startTime;
         $endTime = $event->endTime;
         // ,'eventDate','startTime','endTime'
 
-        return view('manager.events.show',compact('event'));
+        return view('manager.events.show',compact('event','users','reservations'));
     }
 
     /**
@@ -89,6 +112,12 @@ class EventController extends Controller
      */
     public function edit(Event $event)
     {
+        $event = Event::findOrFail();
+        $today = Carbon::today()->format('Y年m月d日');
+        if($event->eventDate < $today) {
+            abort(404);
+        }
+
         $event = Event::findOrFail($event->id);
         $eventDate = $event->editEventDate;
         $startTime = $event->startTime;
@@ -136,8 +165,17 @@ class EventController extends Controller
     public function past()
     {
         $today = Carbon::today();
-        $events = Event::whereDate('start_date','<',$today)
-        ->orderBy('start_date','desc')->paginate(10);
+
+        $reservedPeople = Reservation::select('event_id',DB::raw('SUM(number_of_people) as number_of_people'))
+        ->whereNull('canceled_date')
+        ->groupBy('event_id');
+
+        $events = Event::leftJoinSub($reservedPeople,'reservedPeople',function($join) {
+            $join->on('events.id','=','reservedPeople.event_id');
+        })
+        ->whereDate('start_date','<',$today)
+        ->orderBy('start_date','desc')
+        ->paginate(10);
 
         return view('manager.events.past',compact('events'));
     }
