@@ -3,6 +3,7 @@
 use App\Http\Controllers\LivewareTestController;
 use App\Http\Controllers\AlpineTestController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ReservationController;
 use Barryvdh\Debugbar\DataCollector\EventCollector;
 use Illuminate\Support\Facades\Route;
 
@@ -21,15 +22,15 @@ Route::get('/', function () {
     return view('calendar');
 });
 
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified'
-])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
-});
+// Route::middleware([
+//     'auth:sanctum',
+//     config('jetstream.auth_session'),
+//     'verified'
+// ])->group(function () {
+//     Route::get('/dashboard', function () {
+//         return view('dashboard');
+//     })->name('dashboard');
+// });
 
 Route::prefix('manager')->middleware('can:manager-higher')->group(function() {
     Route::get('events/past',[EventController::class,'past'])->name('events.past');
@@ -37,9 +38,9 @@ Route::prefix('manager')->middleware('can:manager-higher')->group(function() {
 });
 
 Route::middleware('can:user-higher')->group(function() {
-    Route::get('index', function () {
-        dd('user');
-    });
+    Route::get('dashboard', [ReservationController::class,'dashboard'])->name('dashboard');
+    Route::get('/{id}', [ReservationController::class,'detail'])->name('events.detail');
+    Route::post('/{id}', [ReservationController::class,'reserve'])->name('events.reserve');
 });
 
 Route::controller(LivewareTestController::class)
